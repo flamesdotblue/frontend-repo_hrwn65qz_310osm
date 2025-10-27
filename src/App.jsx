@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Header from "./components/Header";
+import Hero from "./components/Hero";
 import JobSubmit from "./components/JobSubmit";
 import StatsOverview from "./components/StatsOverview";
 import JobsTable from "./components/JobsTable";
 
 function simulateWorkerAssignment(priority) {
   const workers = ["alpha", "bravo", "charlie", "delta", "echo"];
-  // Higher priority tends to pick faster workers
   const index = Math.max(0, Math.min(workers.length - 1, Math.floor((priority - 1) / 2)));
   return workers[index + Math.floor(Math.random() * (workers.length - index))] || "alpha";
 }
@@ -14,7 +13,6 @@ function simulateWorkerAssignment(priority) {
 export default function App() {
   const [jobs, setJobs] = useState([]);
 
-  // Derived live stats
   const stats = useMemo(() => {
     return jobs.reduce(
       (acc, j) => {
@@ -25,7 +23,6 @@ export default function App() {
     );
   }, [jobs]);
 
-  // Handle job submission: push to queue and simulate lifecycle
   const handleSubmit = useCallback((job) => {
     const now = Date.now();
     const withMeta = {
@@ -38,7 +35,6 @@ export default function App() {
 
     setJobs((prev) => [withMeta, ...prev]);
 
-    // Simulate scheduling delay based on priority
     const scheduleDelay = Math.max(200, 1200 - job.priority * 100);
 
     setTimeout(() => {
@@ -49,7 +45,6 @@ export default function App() {
         )
       );
 
-      // Simulate execution time and potential failure
       const runTime = 1000 + Math.random() * (job.priority <= 2 ? 1200 : 2500);
       setTimeout(() => {
         const failed = Math.random() < (job.priority <= 2 ? 0.05 : job.priority >= 8 ? 0.15 : 0.1);
@@ -69,7 +64,6 @@ export default function App() {
     }, scheduleDelay);
   }, []);
 
-  // Update live durations for running jobs
   const tickRef = useRef(null);
   useEffect(() => {
     tickRef.current = setInterval(() => {
@@ -85,18 +79,23 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <Header />
+    <div className="min-h-screen bg-white text-slate-900">
+      <Hero />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
         <StatsOverview stats={stats} />
-        <JobSubmit onSubmit={handleSubmit} />
+        <div id="submit">
+          <JobSubmit onSubmit={handleSubmit} />
+        </div>
         <JobsTable jobs={jobs} />
 
         <section className="text-xs text-slate-500">
-          This UI demonstrates the control plane for a distributed scheduler with priority
-          queueing, live state, and historical visibility. Connect it to your FastAPI + Redis +
-          MongoDB backend to power real workloads.
+          Connect this UI to your backend with:
+          <ul className="list-disc ml-5 mt-1 space-y-1">
+            <li>POST /jobs to enqueue</li>
+            <li>GET /jobs and GET /stats to fetch</li>
+            <li>WebSocket /ws for real-time updates</li>
+          </ul>
         </section>
       </main>
     </div>
